@@ -53,6 +53,14 @@ Default:
 '#ffff00', '#008000' ]
 ```
 
+### borderColor
+
+`String` | The color used for the cell borders
+
+Can be any valid HEX code.
+
+Default: `#878787`
+
 ### size
 
 `Int` | The size of each cell in pixels

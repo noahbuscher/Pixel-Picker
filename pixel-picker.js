@@ -156,7 +156,7 @@
 
     // Draw the cells
     drawCells = function() {
-      var borderColor = '#878787',
+      var borderColor = settings.borderColor,
           canvasWidth = c.width,
           canvasHeight = c.height;
 
@@ -215,7 +215,8 @@
         '#ffffff', '#000000',
         '#ff0000', '#0000ff',
         '#ffff00', '#008000'
-      ]
+      ],
+      borderColor: '#878787'
     }, options);
 
     // Convert palette to array of RGB arrays
