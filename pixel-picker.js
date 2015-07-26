@@ -238,7 +238,7 @@
     // If eraserColor is left unset, first color in
     // palette is assigned
     if (settings.eraserColor == null) {
-      settings.eraserColor = settings.palette[0];
+      settings.eraserColor = parseColor(settings.palette[0]);
     } else {
       palette.unshift(parseColor(settings.eraserColor));
     }
@@ -258,8 +258,8 @@
         if (!event.metaKey && !event.ctrlKey) isErasing = false;
       });
 
-      // Set up our initial color
-    currentColor = settings.palette[0];
+    // Set up our initial color
+    currentColor = parseColor(settings.palette[0]);
 
     // Draw the cells to the canvas
     drawCells();
