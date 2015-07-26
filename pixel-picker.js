@@ -239,6 +239,7 @@
       .on('contextmenu', function(event) {
         return event.preventDefault();
       })
+    $(window)
       // When CTRL (Mac) or CMD (Windows) key is down, eraser is active
       .on('keydown', function(event) {
         if (event.metaKey || event.ctrlKey) isErasing = true;
