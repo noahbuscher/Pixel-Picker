@@ -23,6 +23,23 @@
         palette = [],
         map = [];
 
+    // Core functions
+    var updateHandler,
+        applyColor,
+        cycleColor,
+        makeCell,
+        drawCells,
+        findCellIndex,
+        chooseColor,
+        colorCell;
+
+    // Helper functions
+    var parseColor,
+        parseHex,
+        parseRgb,
+        arrayToRgb,
+        arrayEqual;
+
     // Init canvas
     var c = $(this).get(0),
         ctx = c.getContext('2d');
@@ -30,6 +47,9 @@
     ctx.canvas.height = ctx.canvas.height + 1;
     ctx.canvas.width = ctx.canvas.width + 1;
 
+    // Takes the passed in cell, finds its current background color within
+    // the color palette, and updates the currentColor to the next
+    // (or previous if reverse is true) color in the palette
     cycleColor = function(cell, reverse) {
       var cellColor = parseColor(cell.color);
 
@@ -89,16 +109,19 @@
       });
     };
 
+    // Check if two arrays are exacty the same
     arrayEqual = function(a, b) {
       return a.length === b.length && a.every(function(elem, i) {
         return elem === b[i];
       });
     };
 
+    // Convert an RGB array back to a CSS RGB color
     arrayToRgb = function(inArray) {
       return 'rgb(' + inArray[0] + ', ' + inArray[1] + ', ' + inArray[2] + ')';
     };
 
+    // Update whatever is handling the updated map of cells
     updateHandler = function(index, dontHandle) {
       var handler = settings.update;
       var newColor = currentColor;
@@ -116,6 +139,7 @@
       }
     };
 
+    // Create a new cell in the canvas
     makeCell = function(x, y, width, height) {
       var cell = {};
 
@@ -152,6 +176,7 @@
       }
     };
 
+    // Find the index of the cell in the map from its coords
     findCellIndex = function(x, y) {
       for (var i = 0; i < map.length; i++) {
         var left = map[i].x,
@@ -165,11 +190,13 @@
       }
     }
 
+    // Select the next color
     chooseColor = function(x, y, reverse) {
       var selectedCell = map[findCellIndex(x, y)];
       cycleColor(selectedCell, reverse);
     }
 
+    // Color the cell currently selected
     colorCell = function(x, y) {
       var selectedCell = map[findCellIndex(x, y)];
 
@@ -179,6 +206,7 @@
       ctx.fillRect(selectedCell.x + 0.5, selectedCell.y + 0.5, selectedCell.width - 1, selectedCell.height - 1);
     }
 
+    // Woo settings!
     settings = $.extend({
       update: null,
       ready: null,
@@ -191,10 +219,15 @@
       ]
     }, options);
 
+    // Convert palette to array of RGB arrays
     settings.palette.forEach(function(color) {
       palette.push(parseColor(color));
     });
 
+    // Add the eraser color as the first color in
+    // the palette. Required to make color cycling work.
+    // If eraserColor is left unset, first color in
+    // palette is assigned
     if (settings.eraserColor == null) {
       settings.eraserColor = settings.palette[0];
     } else {
@@ -215,10 +248,13 @@
         if (!event.metaKey && !event.ctrlKey) isErasing = false;
       });
 
+      // Set up our initial color
     currentColor = settings.palette[0];
 
+    // Draw the cells to the canvas
     drawCells();
 
+    // When a cell is clicked in to...
     $(c).on('mousedown', function(event) {
       var isRightClick = ('which' in event && event.which === 3) || ('button' in event && event.button === 2);
 
@@ -231,6 +267,7 @@
       colorCell(x, y);
     });
 
+    // When a cell is moved over
     $(c).on('mousemove', function(event) {
       if (!isDragging) return;
 
@@ -240,6 +277,7 @@
       colorCell(x, y);
     });
 
+    // Turn dragging off when we mouse up
     $(c).on('mouseup', function() {
       isDragging = false;
     });

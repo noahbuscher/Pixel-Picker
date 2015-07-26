@@ -53,6 +53,14 @@ Default:
 '#ffff00', '#008000' ]
 ```
 
+### size
+
+`Int` | The size of each cell in pixels
+
+Pixel Picker calclates how many cells can fit in the current canvas layout for you.
+
+Default: `20`
+
 #### eraserColor
 
 `String` | The color used for the eraser
