@@ -21,7 +21,8 @@
         isErasing = false,
         isDragging = false,
         palette = [],
-        map = [];
+        map = [],
+        colorMap = [];
 
     // Core functions
     var updateHandler,
@@ -130,12 +131,20 @@
 
       if (dontHandle) return;
 
+      for (key in map) {
+        var cell = map[key];
+
+        if (!colorMap[cell.y - 0.5]) colorMap[cell.y - 0.5] = []
+
+        colorMap[cell.y - 0.5][cell.x - 0.5] = cell.color;
+      }
+
       if (typeof handler === 'function') {
         // We can either pass off the updated map to a function
-        handler(map);
+        handler(colorMap);
       } else if (handler instanceof jQuery) {
         // Or, we can update the value="" of a jQuery input
-        handler.val(JSON.stringify(map));
+        handler.val(JSON.stringify(colorMap));
       }
     };
 
