@@ -23,23 +23,15 @@
         palette = [],
         map = [];
 
-    // Core functions
-    var updateHandler,
-        applyColor,
-        cycleColor;
+    // Init canvas
+    var c = $(this).get(0),
+        ctx = c.getContext('2d');
 
-    // Helper functions
-    var parseColor,
-        parseHex,
-        parseRgb,
-        arrayToRgb,
-        arrayEqual;
+    ctx.canvas.height = ctx.canvas.height + 1;
+    ctx.canvas.width = ctx.canvas.width + 1;
 
-    // Takes the passed in cell, finds its current background color within
-    // the color palette, and updates the currentColor to the next
-    // (or previous if reverse is true) color in the palette
     cycleColor = function(cell, reverse) {
-      var cellColor = parseColor(cell.css('background-color').length ? cell.css('background-color') : '#ffffff');
+      var cellColor = parseColor(cell.color);
 
       // If we're in eraser mode, return early
       if (isErasing) {
@@ -74,29 +66,6 @@
       return currentColor = palette[nextIndex];
     };
 
-    // Apply the global current color as the cell's background
-    applyColor = function(cell) {
-      return cell.css('background-color', arrayToRgb(currentColor));
-    };
-
-    // Update whatever is handling the updated map of colors
-    updateHandler = function(rowIndex, cellIndex, cell, dontHandle) {
-      var handler = settings.update;
-      var newColor = (cell != null && cell.css('background-color').length ? parseColor(cell.css('background-color')) : currentColor);
-
-      map[rowIndex][cellIndex] = newColor;
-
-      if (dontHandle) return;
-
-      if (typeof handler === 'function') {
-        // We can either pass off the updated map to a function
-        handler(map);
-      } else if (handler instanceof jQuery) {
-        // Or, we can update the value="" of a jQuery input
-        handler.val(JSON.stringify(map));
-      }
-    };
-
     // Determine if we need to parse a hex or rgb value
     parseColor = function(color) {
       // If the color is already an RGB array, return
@@ -120,25 +89,101 @@
       });
     };
 
-    // Convert an RGB array back to a CSS RGB color
-    arrayToRgb = function(inArray) {
-      return 'rgb(' + inArray[0] + ', ' + inArray[1] + ', ' + inArray[2] + ')';
-    };
-
-    // Check if two arrays are exacty the same
     arrayEqual = function(a, b) {
       return a.length === b.length && a.every(function(elem, i) {
         return elem === b[i];
       });
     };
 
-    // Woo settings!
+    arrayToRgb = function(inArray) {
+      return 'rgb(' + inArray[0] + ', ' + inArray[1] + ', ' + inArray[2] + ')';
+    };
+
+    updateHandler = function(index, dontHandle) {
+      var handler = settings.update;
+      var newColor = currentColor;
+
+      map[index].color = newColor;
+
+      if (dontHandle) return;
+
+      if (typeof handler === 'function') {
+        // We can either pass off the updated map to a function
+        handler(map);
+      } else if (handler instanceof jQuery) {
+        // Or, we can update the value="" of a jQuery input
+        handler.val(JSON.stringify(map));
+      }
+    };
+
+    makeCell = function(x, y, width, height) {
+      var cell = {};
+
+      cell.x = x;
+      cell.y = y;
+      cell.width = width;
+      cell.height = height;
+      cell.color = currentColor;
+
+      map.push(cell);
+
+      ctx.strokeRect(x, y, width, height);
+    }
+
+    // Draw the cells
+    drawCells = function() {
+      var borderColor = '#878787',
+          canvasWidth = c.width,
+          canvasHeight = c.height;
+
+      var colCount = Math.floor(canvasWidth / settings.size);
+      var rowCount = Math.floor(canvasHeight / settings.size);
+
+      ctx.strokeStyle = borderColor;
+
+      for (i = 0; i <= colCount; i++) {
+        var colPos = i * settings.size + 0.5;
+
+        for (r = 0; r <= rowCount; r++) {
+          var rowPos = r * settings.size + 0.5;
+
+          makeCell(colPos, rowPos, settings.size, settings.size);
+        }
+      }
+    };
+
+    findCellIndex = function(x, y) {
+      for (var i = 0; i < map.length; i++) {
+        var left = map[i].x,
+            right = map[i].x + map[i].width,
+            top = map[i].y,
+            bottom = map[i].y + map[i].height;
+
+        if (right >= x && left <= x && bottom >= y && top <= y) {
+          return i;
+        }
+      }
+    }
+
+    chooseColor = function(x, y, reverse) {
+      var selectedCell = map[findCellIndex(x, y)];
+      cycleColor(selectedCell, reverse);
+    }
+
+    colorCell = function(x, y) {
+      var selectedCell = map[findCellIndex(x, y)];
+
+      updateHandler(findCellIndex(x, y));
+
+      ctx.fillStyle = arrayToRgb(currentColor);
+      ctx.fillRect(selectedCell.x + 0.5, selectedCell.y + 0.5, selectedCell.width - 1, selectedCell.height - 1);
+    }
+
     settings = $.extend({
       update: null,
       ready: null,
-      rowSelector: '.pixel-picker-row',
-      cellSelector: '.pixel-picker-cell',
       eraserColor: null,
+      size: 20,
       palette: [
         '#ffffff', '#000000',
         '#ff0000', '#0000ff',
@@ -146,25 +191,20 @@
       ]
     }, options);
 
-    // Convert palette to array of RGB arrays
     settings.palette.forEach(function(color) {
       palette.push(parseColor(color));
     });
 
-    // Add the eraser color as the first color in
-    // the palette. Required to make color cycling work.
-    // If eraserColor is left unset, first color in
-    // palette is assigned
     if (settings.eraserColor == null) {
       settings.eraserColor = settings.palette[0];
     } else {
       palette.unshift(parseColor(settings.eraserColor));
-    };
+    }
 
-    $(window)
+    $(c)
       // Prevent context menu from showing up over top of cells
       .on('contextmenu', function(event) {
-        if ($(event.target).hasClass(settings.cellSelector.substring(1))) return event.preventDefault();
+        return event.preventDefault();
       })
       // When CTRL (Mac) or CMD (Windows) key is down, eraser is active
       .on('keydown', function(event) {
@@ -175,70 +215,36 @@
         if (!event.metaKey && !event.ctrlKey) isErasing = false;
       });
 
-    // Find all the rows
-    rows = this.find(settings.rowSelector);
-    rowCount = rows.length;
-
-    // Set up our initial color
     currentColor = settings.palette[0];
 
-    rows.each(function(rowIndex, row) {
-      row = $(row);
-      map.push([]);
-      var cellCollection = map[rowIndex];
-      var cells = row.find(settings.cellSelector);
-      var cellCount = cells.length;
+    drawCells();
 
-      cells.each(function(cellIndex, cell) {
-        cell = $(cell);
-        cellCollection.push([]);
+    $(c).on('mousedown', function(event) {
+      var isRightClick = ('which' in event && event.which === 3) || ('button' in event && event.button === 2);
 
-        // When a cell is clicked in to...
-        cell.on('mousedown', function(event) {
-          // First, was it a right click?
-          var isRightClick = ('which' in event && event.which === 3) || ('button' in event && event.button === 2);
+      isDragging = true;
 
-          // By default, turn dragging on so the mouse can move to
-          // another cell and have continuity
-          isDragging = true;
+      var x = Math.floor((event.pageX-$(c).offset().left));
+      var y = Math.floor((event.pageY-$(c).offset().top));
 
-          // Now we do all the work
-          cycleColor(cell, isRightClick);
-          applyColor(cell);
-          updateHandler(rowIndex, cellIndex);
-        });
+      chooseColor(x, y, isRightClick);
+      colorCell(x, y);
+    });
 
-        // Turn dragging off when we mouse up
-        cell.on('mouseup', function() {
-          isDragging = false;
-        });
+    $(c).on('mousemove', function(event) {
+      if (!isDragging) return;
 
-        // When the mouse enters a cell, if dragging is on
-        // (turned on in the mousedown event), apply our current
-        // global color to the cell, no cycling
-        cell.on('mouseenter', function() {
-          if (!isDragging) return;
+      var x = Math.floor((event.pageX-$(c).offset().left));
+      var y = Math.floor((event.pageY-$(c).offset().top));
 
-          applyColor(cell);
-          updateHandler(rowIndex, cellIndex);
-        });
+      colorCell(x, y);
+    });
 
-        // Update the handler when we've finished the initial cell processing
-        if (rowIndex + 1 === rowCount && cellIndex + 1 === cellCount) {
-          updateHandler(rowIndex, cellIndex, cell);
-
-          // Trigger the ready handler if there is one
-          if (settings.ready) {
-            settings.ready();
-          }
-        } else {
-          updateHandler(rowIndex, cellIndex, cell, true);
-        };
-      });
+    $(c).on('mouseup', function() {
+      isDragging = false;
     });
 
     return this;
-
   };
 
 }(jQuery));

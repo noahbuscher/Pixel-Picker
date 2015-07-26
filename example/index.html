@@ -1,0 +1,19 @@
+<html>
+  <head>
+    <title>Pixel Picker</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="../pixel-picker.js"></script>
+
+    <script>
+      $(function() {
+        $('#pixel-picker').pixelPicker({
+          palette: [ '#ff0000', '#0000ff', '#ffff00', '#008000' ]
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <canvas height="300" width="300" id="pixel-picker"></canvas>
+  </body>
+</html>

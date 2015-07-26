@@ -10,28 +10,15 @@ Create cool pixel art. Used on Designer News.
 
 * Include jQuery
 * Include the plugin JS
-* Optionally include the CSS, or style the container/rows/cells yourself
-* Create your HTML structure. It should look similar to this:
+* Create a canvas on the document. It should look similar to this:
 
     ```
-    <!-- This is the container -->
-    <div class="pixel-picker-container">
-
-      <!-- This is a row -->
-      <div class="pixel-picker-row">
-        <!-- These are cells -->
-        <div class="pixel-picker-cell"></div>
-        <div class="pixel-picker-cell"></div>
-        <div class="pixel-picker-cell"></div>
-      </div>
-
-      <!-- Wash, rinse, repeat -->
-    </div>
+    <canvas width="300" height="300" id="pixel-picker"></canvas>
     ```
-* Finally, fire up the plugin using `pixelPicker` on your containing element.
+* Finally, fire up the plugin using `pixelPicker` on the canvas.
 
     ```
-    $('.pixel-picker-container').pixelPicker();
+    $('#pixel-picker').pixelPicker();
     ```
 
 ## Options
@@ -76,12 +63,6 @@ If set the color will be prepended to the palette. If left as `null` the eraser 
 
 Default: `null`
 
-#### rowSelector and cellSelector
-
-`String` | The jQuery selectors to locate rows and cells
-
-Default: `.pixel-picker-row` and `.pixel-picker-cell`
-
 #### update
 
 `Function` or jQuery object | What to do when the color map (cells) gets updated
@@ -99,14 +80,6 @@ Or it can be a jQuery object that has a `value` attribute, which will be updated
 ```
 update: $('.pixel-values-hidden-input')
 ```
-
-Default: `null`
-
-#### ready
-
-`Function` | What to do when the plugin is ready
-
-Since the plugin can sometimes take a few seconds to initially calculate the cells, this function will be called when everything is ship-shape.
 
 Default: `null`
 
