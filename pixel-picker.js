@@ -209,7 +209,6 @@
     // Woo settings!
     settings = $.extend({
       update: null,
-      ready: null,
       eraserColor: null,
       size: 20,
       palette: [
